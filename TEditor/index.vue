@@ -5,7 +5,7 @@
 </template>
 <script>
 const tinymceCDN = 'https://cdn.jsdelivr.net/npm/tinymce@5.10.2/tinymce.min.js'
-import { Constant, Verification, Http } from '@/utils'
+import { default as Http } from '@/utils/ajax'
 import { UploadFile } from '@/api/common'
 import load from './dynamicLoadScript'
 
@@ -15,7 +15,7 @@ export default {
   props: {
     code: {
       type: String,
-      default: 'sysArticle',
+      default: '',
     },
     name: {
       type: String,
@@ -32,8 +32,10 @@ export default {
   },
   data() {
     return {
+      keo: '',
       hasInit: false,
       hasChange: false,
+      fullscreen: false,
       tinymceId: this.$props.name,
       // 图片相关
       fileList: [],
@@ -68,7 +70,13 @@ export default {
   },
   created() {},
   computed: {},
-  watch: {},
+  watch: {
+    showContent(val) {
+      if (!this.hasChange && this.hasInit) {
+        this.$nextTick(() => window.tinymce.get(this.tinymceId).setContent(val || ''))
+      }
+    },
+  },
   methods: {
     init() {
       // dynamic load tinymce from cdn
@@ -80,17 +88,172 @@ export default {
         this.initEditor()
       })
     },
+
     initEditor() {
       const that = this
       tinymce.init({
         selector: `#${this.tinymceId}`,
         deprecation_warnings: false, // 去除警告
-        language_url: '/tinymce/langs/zh_CN.js', //汉化路径是自定义的，一般放在public或static里面
+        language_url: '/static/tinymce/langs/zh_CN.js', //汉化路径是自定义的，一般放在public或static里面
         language: 'zh_CN',
         // skin_url: '/tinymce/skins/ui/oxide', //皮肤
         content_style:
-          '* {font-size: 16px;font-family: 默认字体; } p {margin: 5px 0;} img {max-width:100% !important ; height:auto } ',
+          '* {font-size: 14px;font-family: 默认字体; } p {margin: 0px 0;} img {max-width:100% !important ; height:auto } ',
         body_class: 'panel-body ',
+        style_formats: [
+          {
+            title: '首行缩进',
+            block: 'p',
+            styles: {
+              'text-indent': '2em',
+            },
+          },
+          {
+            title: '字符间距',
+            items: [
+              {
+                title: '0px',
+                styles: {
+                  'letter-spacing': '0px',
+                },
+                inline: 'span',
+              },
+              {
+                title: '1px',
+                styles: {
+                  'letter-spacing': '1px',
+                },
+                inline: 'span',
+              },
+              {
+                title: '2px',
+                styles: {
+                  'letter-spacing': '2px',
+                },
+                inline: 'span',
+              },
+              {
+                title: '3px',
+                styles: {
+                  'letter-spacing': '3px',
+                },
+                inline: 'span',
+              },
+              {
+                title: '4px',
+                styles: {
+                  'letter-spacing': '4px',
+                },
+                inline: 'span',
+              },
+              {
+                title: '6px',
+                styles: {
+                  'letter-spacing': '6px',
+                },
+                inline: 'span',
+              },
+            ],
+          },
+          {
+            title: '段前距',
+            items: [
+              {
+                title: '0',
+                styles: {
+                  'margin-top': '0px',
+                },
+                block: 'p',
+              },
+              {
+                title: '5px',
+                styles: {
+                  'margin-top': '5px',
+                },
+                block: 'p',
+              },
+              {
+                title: '10px',
+                styles: {
+                  'margin-top': '10px',
+                },
+                block: 'p',
+              },
+              {
+                title: '15px',
+                styles: {
+                  'margin-top': '15px',
+                },
+                block: 'p',
+              },
+              {
+                title: '20px',
+                styles: {
+                  'margin-top': '20px',
+                },
+                block: 'p',
+              },
+              {
+                title: '25px',
+                styles: {
+                  'margin-top': '25px',
+                },
+                block: 'p',
+              },
+            ],
+          },
+          {
+            title: '段后距',
+            items: [
+              {
+                title: '0 ',
+                styles: {
+                  'margin-bottom': '0px',
+                },
+                block: 'p',
+              },
+              {
+                title: '5px ',
+                styles: {
+                  'margin-bottom': '5px',
+                },
+                block: 'p',
+              },
+              {
+                title: '10px ',
+                styles: {
+                  'margin-bottom': '10px',
+                },
+                block: 'p',
+              },
+              {
+                title: '15px ',
+                styles: {
+                  'margin-bottom': '15px',
+                },
+                block: 'p',
+              },
+              {
+                title: '20px ',
+                styles: {
+                  'margin-bottom': '20px',
+                },
+                block: 'p',
+              },
+              {
+                title: '25px ',
+                styles: {
+                  'margin-bottom': '25px',
+                },
+                block: 'p',
+              },
+            ],
+          },
+        ],
+        style_formats_merge: false,
+        style_formats_autohide: true,
+        lineheight_formats: '1 1.5 1.6 1.75 1.8 2 3 4 5',
+
         // advlist_bullet_styles: 'default', // 无序列表圆心样式
         // advlist_number_styles: 'default', // 有序列表的顺序
         readonly: this.$props.disabled, // 动态开启不能用这个
@@ -101,17 +264,20 @@ export default {
         // styleselect formatselect fontselect fontsizeselect | bullist numlist | blockquote subscript superscript removeformat | \
         // table image media charmap emoticons hr pagebreak insertdatetime print preview | fullscreen | bdmap indent2em lineheight formatpainter axupimgs',
         plugins:
-          'advlist autolink link image media  lists charmap table fullscreen imagetools preview code codesample  searchreplace directionality visualblocks visualchars template hr nonbreaking insertdatetime  textpattern autoresize paste', //插件
+          'advlist  autolink link image media  lists charmap table  imagetools preview code codesample  searchreplace directionality visualblocks visualchars template hr nonbreaking insertdatetime  textpattern autoresize paste', //插件
         //工具栏
         toolbar:
-          'code undo redo image media link | preview | forecolor backcolor bold italic | lineheight formatselect fontselect fontsizeselect | \
-          alignleft aligncenter alignright alignjustify | bullist numlist outdent indent lists | fullscreen ',
+          'code   image media link | preview | lineheight fontsizeselect forecolor backcolor bold italic |  styleselect fontselect  | \
+          alignleft aligncenter alignright alignjustify | bullist numlist outdent indent lists |  ',
         toolbar_location: '/', //工具栏位置
         fontsize_formats: '12px 14px 16px 18px 20px 22px 24px 28px 32px 36px 48px 56px 72px', //字体大小
         font_formats:
           '微软雅黑=Microsoft YaHei,Helvetica Neue,PingFang SC,sans-serif;苹果苹方=PingFang SC,Microsoft YaHei,sans-serif;宋体=simsun,serif;仿宋体=FangSong,serif;黑体=SimHei,sans-serif;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;Comic Sans MS=comic sans ms,sans-serif;Courier New=courier new,courier;Georgia=georgia,palatino;Helvetica=helvetica;Impact=impact,chicago;Symbol=symbol;Tahoma=tahoma,arial,helvetica,sans-serif;Terminal=terminal,monaco;Times New Roman=times new roman,times;Verdana=verdana,geneva;Webdings=webdings;Wingdings=wingdings,zapf dingbats;知乎配置=BlinkMacSystemFont, Helvetica Neue, PingFang SC, Microsoft YaHei, Source Han Sans SC, Noto Sans CJK SC, WenQuanYi Micro Hei, sans-serif;小米配置=Helvetica Neue,Helvetica,Arial,Microsoft Yahei,Hiragino Sans GB,Heiti SC,WenQuanYi Micro Hei,sans-serif',
 
         min_height: 400,
+        max_height: 400,
+        toolbar_mode: 'sliding',
+
         placeholder: '在这里输入内容~',
         resize: false, //调整编辑器大小
         // branding: false, //隐藏右下角技术支持
@@ -133,6 +299,7 @@ export default {
 
         media_poster: false, //视频上传,显示隐藏图片封面输入框
         media_alt_source: false, //视频上传,显示隐藏资源备用地址输入框
+        // contextmenu: false,
 
         // 在粘贴的内容被插入到编辑器之前对其进行修改
         paste_preprocess: (plugin, args) => {
@@ -151,7 +318,6 @@ export default {
             let input = document.createElement('input')
             input.setAttribute('type', 'file')
             input.setAttribute('accept', '.mp4')
-            input.click()
             input.onchange = function () {
               let file = this.files[0]
               if (file.type == 'video/mp4') {
@@ -160,38 +326,38 @@ export default {
                 that.$message.warning('请上传MP4文件')
               }
             }
+            input.click()
           }
           if (meta.filetype == 'file') {
             //创建一个隐藏的type=file的文件选择input
             let input = document.createElement('input')
+
             input.setAttribute('type', 'file')
             input.setAttribute('accept', '.pdf')
-            input.click()
             input.onchange = function () {
               let file = this.files[0]
               that.handleBeforeUpload(file, callback, null, 'file')
             }
+            input.click()
           }
 
           if (meta.filetype == 'image') {
             let types = ['image/jpg', 'image/jpeg', 'image/png']
-
             //创建一个隐藏的type=file的文件选择input
             let input = document.createElement('input')
+            console.log(input)
             input.setAttribute('type', 'file')
             input.setAttribute('accept', 'image/jpg, image/jpeg,  image/png')
-            input.click()
             input.onchange = function () {
               let file = this.files[0]
               const isImg = types.includes(file.type)
-
-              // that.handleBeforeUpload(file, callback, null, 'file')
               if (isImg) {
                 that.handleBeforeUpload(file, callback, null, 'img')
               } else {
                 that.$message.warning('上传图片只能是jpg、png、jpeg格式!')
               }
             }
+            input.click()
           }
         },
         images_upload_handler: (blobInfo, succFun, failFun) => {
@@ -205,7 +371,11 @@ export default {
             that.$message.warning('上传图片只能是jpg、png、jpeg格式!')
           }
         },
-        setup: (editor) => {},
+        setup: (editor) => {
+          // editor.on('FullscreenStateChanged', (e) => {
+          //   that.fullscreen = e.state
+          // })
+        },
 
         init_instance_callback: (editor) => {
           //init_instance_callback为回调配置项
@@ -223,6 +393,7 @@ export default {
 
           editor.on('input change', (e) => {
             console.log(11, editor.getContent())
+            that.hasChange = true
             that.$emit('handleQuillEditor', editor.getContent())
           })
 
